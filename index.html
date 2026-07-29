@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mapa conceptual — NIA 500</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbfaf8;
+    --ink:#241f38;
+    --ink-dim:#726d85;
+    --navy:#332c66;
+    --navy-dark:#211a49;
+    --teal:#5bc4b3;
+    --teal-dark:#3a9a8b;
+    --orange:#f4a93f;
+    --orange-dark:#d4841a;
+    --card:#ffffff;
+    --border:#e8e4f0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:'Poppins', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding:56px 24px 80px;
+    position:relative;
+    overflow-x:hidden;
+    background:
+      radial-gradient(ellipse 900px 700px at 0% 0%, rgba(91,196,179,0.55), transparent 62%),
+      radial-gradient(ellipse 900px 700px at 100% 0%, rgba(244,169,63,0.5), transparent 62%),
+      radial-gradient(ellipse 900px 750px at 100% 100%, rgba(51,44,102,0.55), transparent 62%),
+      radial-gradient(ellipse 900px 700px at 0% 100%, rgba(244,169,63,0.4), transparent 62%),
+      radial-gradient(ellipse 1000px 800px at 50% 50%, rgba(91,196,179,0.25), transparent 60%),
+      linear-gradient(135deg, #eef4f2, #f7f0e6 45%, #efeaf7);
+  }
+  .wrap{ position:relative; z-index:1; }
+ 
+  .wrap{ max-width:1220px; margin:0 auto; }
+ 
+  h1{
+    font-weight:600;
+    font-size:clamp(30px, 4.4vw, 46px);
+    text-align:center;
+    margin:0 0 10px;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  h1 b{ font-weight:700; color:var(--navy); }
+ 
+  .subtitle{
+    text-align:center;
+    font-weight:400;
+    color:var(--ink-dim);
+    font-size:16px;
+    max-width:640px;
+    margin:0 auto 34px;
+  }
+ 
+  .hint{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    max-width:fit-content; margin:0 auto 44px;
+    padding:18px 32px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:var(--card);
+    box-shadow:0 6px 18px rgba(51,44,102,0.1);
+    font-size:18px; font-weight:600;
+    color:var(--ink);
+    transition:opacity .4s ease, visibility .4s ease;
+  }
+  .hint.faded{ opacity:0; visibility:hidden; }
+  .hint i{ color:var(--orange); font-size:26px; }
+  .hint .dot{ width:10px; height:10px; border-radius:50%; background:var(--orange); flex:0 0 auto; }
+  @media (prefers-reduced-motion:no-preference){
+    .hint .dot{ animation:pulse-dot 1.6s ease-in-out infinite; }
+  }
+  @keyframes pulse-dot{ 0%,100%{opacity:.4;transform:scale(.85);} 50%{opacity:1;transform:scale(1.15);} }
+  @media (max-width:600px){
+    .hint{ font-size:14px; padding:13px 20px; gap:9px; text-align:center; }
+    .hint i{ font-size:20px; }
+  }
+ 
+  /* ---- stage / map ---- */
+  .stage{ display:flex; align-items:flex-start; gap:0; max-width:1400px; margin:0 auto; }
+  .mapzone{
+    position:relative; flex:1 1 auto; min-width:0; max-width:1220px; margin:0 auto;
+    aspect-ratio:1300/660; transition:max-width .5s ease;
+  }
+  .stage.panel-open .mapzone{ max-width:880px; }
+  .mapzone svg.lines{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; z-index:0; }
+  .lines path{ fill:none; stroke:#c9c3da; stroke-width:2; }
+ 
+  .blob{
+    position:absolute; transform:translate(-50%,-50%);
+    border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; z-index:2; cursor:pointer;
+    transition:transform .3s ease, box-shadow .3s ease;
+  }
+  .blob:hover{ transform:translate(-50%,-50%) scale(1.04); }
+  .blob.active{ transform:translate(-50%,-50%) scale(1.06); }
+  .blob.active::after{
+    content:""; position:absolute; inset:-9px; border-radius:50%;
+    box-shadow:0 0 0 3px var(--orange); pointer-events:none;
+  }
+ 
+  .blob-center{
+    width:20%; padding-bottom:20%; height:0; /* aspect ratio square via padding trick replaced below */
+  }
+  /* use width/height directly instead of padding trick for simplicity */
+  .blob{ width:19%; }
+  .blob::before{ content:""; display:block; padding-top:100%; }
+  .blob-inner{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8%;
+  }
+  .blob-icon{ font-size:26px; margin-bottom:6px; color:#fff; opacity:0.95; }
+  .blob-title{ font-weight:600; font-size:14.5px; line-height:1.25; color:#fff; }
+ 
+  .blob-c{ background:radial-gradient(circle at 35% 30%, var(--teal), var(--teal-dark)); box-shadow:0 14px 30px rgba(58,154,139,0.35); }
+  .blob-n{ width:17%; background:radial-gradient(circle at 35% 30%, var(--navy), var(--navy-dark)); box-shadow:0 14px 30px rgba(33,26,73,0.35); }
+  .blob-c .blob-icon{ font-size:30px; }
+  .blob-c .blob-title{ font-size:16px; }
+ 
+  .badge{
+    position:absolute; width:15%; aspect-ratio:1/1; border-radius:50%;
+    background:var(--teal); border:4px solid var(--bg);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; z-index:3;
+  }
+ 
+  /* leaves */
+  .leaf{ position:absolute; display:flex; align-items:center; gap:12px; z-index:2; cursor:pointer; }
+  .leaf-left{ flex-direction:row; }
+  .leaf-right{ flex-direction:row; }
+  .leaf-text{ max-width:170px; }
+  .leaf-left .leaf-text{ text-align:right; }
+  .leaf-right .leaf-text{ text-align:left; }
+  .leaf-title{ font-weight:600; font-size:13.5px; color:var(--ink); line-height:1.25; }
+  .leaf-desc{ font-size:12px; color:var(--ink-dim); line-height:1.3; margin-top:2px; }
+  .leaf-circle{
+    width:52px; height:52px; border-radius:50%; flex:0 0 auto;
+    background:radial-gradient(circle at 35% 30%, var(--orange), var(--orange-dark));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;
+    box-shadow:0 8px 18px rgba(212,132,26,0.35);
+    transition:transform .3s ease;
+  }
+  .leaf:hover .leaf-circle{ transform:scale(1.08); }
+  .leaf.active .leaf-circle{ box-shadow:0 0 0 3px var(--navy), 0 8px 18px rgba(212,132,26,0.35); }
+ 
+  /* ---- detail panel (rail) ---- */
+  .panel{
+    width:0; flex:0 0 auto; opacity:0; overflow:hidden; align-self:stretch;
+    transition:width .5s cubic-bezier(.2,.7,.3,1), opacity .35s ease, margin-left .5s ease;
+  }
+  .panel.open{ width:400px; opacity:1; margin-left:26px; }
+  .panel-card{
+    position:relative; height:100%; min-height:420px; width:400px;
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:30px 30px 26px 34px; overflow-y:auto;
+    box-shadow:0 16px 40px rgba(51,44,102,0.12);
+  }
+  .panel-card::before{ content:""; position:absolute; left:0; top:18px; bottom:18px; width:4px; border-radius:4px; background:var(--orange); }
+  .panel-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:var(--orange-dark); margin-bottom:8px; display:block; }
+  .panel-title{ font-weight:700; font-size:21px; margin:0 0 14px; color:var(--navy); line-height:1.25; }
+  .panel-body{ font-size:14px; line-height:1.75; color:var(--ink); }
+  .panel-body ul{ margin:10px 0 0; padding-left:20px; }
+  .panel-body li{ margin-bottom:8px; }
+  .panel-close{ position:absolute; top:16px; right:18px; background:none; border:none; color:var(--ink-dim); font-size:20px; line-height:1; cursor:pointer; }
+  .panel-close:hover{ color:var(--orange-dark); }
+ 
+  @media (max-width:960px){
+    .stage{ flex-direction:column; }
+    .stage.panel-open .mapzone{ max-width:1220px; }
+    .panel.open{ width:100%; margin-left:0; margin-top:30px; }
+    .panel-card{ width:100%; min-height:0; }
+  }
+ 
+  footer{ text-align:center; margin-top:56px; font-size:12px; letter-spacing:0.04em; color:var(--ink-dim); }
+  footer span{ color:var(--navy); font-weight:600; }
+ 
+  @media (max-width:760px){
+    .mapzone{ transform:scale(0.68); transform-origin:top center; margin-bottom:-220px; }
+  }
+  @media (max-width:480px){
+    .mapzone{ transform:scale(0.48); margin-bottom:-330px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mapa conceptual <b>NIA 500</b></h1>
+  <p class="subtitle">Evidencia de auditoría — qué la constituye y cómo el auditor obtiene y evalúa evidencia suficiente y adecuada</p>
+ 
+  <div class="hint" id="hint">
+    <i class="ti ti-hand-click" aria-hidden="true"></i>
+    <span>Da clic en un nodo para ver el contenido ampliado</span>
+    <span class="dot"></span>
+  </div>
+ 
+  <div class="stage" id="stage">
+  <div class="mapzone">
+    <svg class="lines" viewBox="0 0 1300 660" preserveAspectRatio="none">
+      <path d="M650 330 C560 290 480 240 420 187"/>
+      <path d="M650 330 C740 290 820 240 884 187"/>
+      <path d="M650 330 C560 370 480 420 420 487"/>
+      <path d="M650 330 C740 370 820 420 884 487"/>
+ 
+      <path d="M235 115 C285 108 315 118 345 145"/>
+      <path d="M235 258 C285 262 315 232 345 205"/>
+      <path d="M1065 115 C1015 108 985 118 955 145"/>
+      <path d="M1065 258 C1015 262 985 232 955 205"/>
+ 
+      <path d="M235 412 C285 405 315 415 345 442"/>
+      <path d="M235 555 C285 559 315 529 345 502"/>
+      <path d="M1065 412 C1015 405 985 415 955 442"/>
+      <path d="M1065 555 C1015 559 985 529 955 502"/>
+    </svg>
+ 
+    <div class="blob blob-c" data-key="intro" style="left:50%; top:50%;">
+      <div class="blob-inner">
+        <i class="ti ti-clipboard-check blob-icon" aria-hidden="true"></i>
+        <div class="blob-title">NIA 500<br>Evidencia de auditoría</div>
+      </div>
+    </div>
+ 
+    <div class="blob blob-n" data-key="alcance_objetivo" style="left:32%; top:28%;">
+      <div class="blob-inner">
+        <i class="ti ti-map-2 blob-icon" aria-hidden="true"></i>
+        <div class="blob-title">Alcance y objetivo</div>
+      </div>
+      <div class="badge" style="left:50%; top:100%; transform:translate(-50%,-50%);"><i class="ti ti-file-text" aria-hidden="true"></i></div>
+    </div>
+ 
+    <div class="blob blob-n" data-key="definiciones" style="left:68%; top:28%;">
+      <div class="blob-inner">
+        <i class="ti ti-book blob-icon" aria-hidden="true"></i>
+        <div class="blob-title">Definiciones clave</div>
+      </div>
+      <div class="badge" style="left:50%; top:100%; transform:translate(-50%,-50%);"><i class="ti ti-abc" aria-hidden="true"></i></div>
+    </div>
+ 
+    <div class="blob blob-n" data-key="suficiencia" style="left:32%; top:74%;">
+      <div class="blob-inner">
+        <i class="ti ti-shield-check blob-icon" aria-hidden="true"></i>
+        <div class="blob-title">Evidencia suficiente y adecuada</div>
+      </div>
+      <div class="badge" style="left:50%; top:100%; transform:translate(-50%,-50%);"><i class="ti ti-list-check" aria-hidden="true"></i></div>
+    </div>
+ 
+    <div class="blob blob-n" data-key="informacion_seleccion" style="left:68%; top:74%;">
+      <div class="blob-inner">
+        <i class="ti ti-file-search blob-icon" aria-hidden="true"></i>
+        <div class="blob-title">Información y selección</div>
+      </div>
+      <div class="badge" style="left:50%; top:100%; transform:translate(-50%,-50%);"><i class="ti ti-filter" aria-hidden="true"></i></div>
+    </div>
+ 
+    <!-- leaves: top-left blob -->
+    <div class="leaf leaf-left" data-key="alcance_objetivo" style="right:82%; top:17%; transform:translateY(-50%);">
+      <div class="leaf-text"><div class="leaf-title">Alcance</div><div class="leaf-desc">Aplica a toda la evidencia obtenida</div></div>
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+    </div>
+    <div class="leaf leaf-left" data-key="alcance_objetivo" style="right:82%; top:39%; transform:translateY(-50%);">
+      <div class="leaf-text"><div class="leaf-title">Objetivo</div><div class="leaf-desc">Diseñar procedimientos adecuados</div></div>
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+    </div>
+ 
+    <!-- leaves: top-right blob -->
+    <div class="leaf leaf-right" data-key="definiciones" style="left:82%; top:17%; transform:translateY(-50%);">
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+      <div class="leaf-text"><div class="leaf-title">Registros contables</div><div class="leaf-desc">Base documental de la evidencia</div></div>
+    </div>
+    <div class="leaf leaf-right" data-key="definiciones" style="left:82%; top:39%; transform:translateY(-50%);">
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+      <div class="leaf-text"><div class="leaf-title">Adecuación y suficiencia</div><div class="leaf-desc">Calidad y cantidad de evidencia</div></div>
+    </div>
+ 
+    <!-- leaves: bottom-left blob -->
+    <div class="leaf leaf-left" data-key="suficiencia" style="right:82%; top:62%; transform:translateY(-50%);">
+      <div class="leaf-text"><div class="leaf-title">Cómo se obtiene</div><div class="leaf-desc">Inspección, confirmación, indagación...</div></div>
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+    </div>
+    <div class="leaf leaf-left" data-key="suficiencia" style="right:82%; top:84%; transform:translateY(-50%);">
+      <div class="leaf-text"><div class="leaf-title">Calidad y cantidad</div><div class="leaf-desc">Más evidencia no compensa baja calidad</div></div>
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+    </div>
+ 
+    <!-- leaves: bottom-right blob -->
+    <div class="leaf leaf-right" data-key="informacion_seleccion" style="left:82%; top:62%; transform:translateY(-50%);">
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+      <div class="leaf-text"><div class="leaf-title">Relevancia y fiabilidad</div><div class="leaf-desc">Experto de la dirección y entidad</div></div>
+    </div>
+    <div class="leaf leaf-right" data-key="informacion_seleccion" style="left:82%; top:84%; transform:translateY(-50%);">
+      <div class="leaf-circle"><i class="ti ti-plus" aria-hidden="true"></i></div>
+      <div class="leaf-text"><div class="leaf-title">Selección de elementos</div><div class="leaf-desc">100%, específicos o muestreo</div></div>
+    </div>
+  </div>
+ 
+  <div class="panel" id="panel">
+    <div class="panel-card">
+      <button class="panel-close" id="panelClose" aria-label="Cerrar">&times;</button>
+      <span class="panel-eyebrow" id="panelRef"></span>
+      <h3 class="panel-title" id="panelTitle"></h3>
+      <div class="panel-body" id="panelBody"></div>
+    </div>
+  </div>
+  </div>
+ 
+  <footer>Se interpreta junto con <span>NIA 200 · 230 · 240 · 250 (Revisada) · 315 (Revisada) · 330 · 501 · 505 · 520 · 530 · 570 (Revisada) · 580 · 620</span></footer>
+</div>
+ 
+<script>
+  const detail = {
+    intro: {
+      ref: "Introducción",
+      title: "NIA 500 — Evidencia de auditoría",
+      body: `<p>Explica qué constituye evidencia de auditoría y la responsabilidad del auditor de obtener evidencia <b>suficiente y adecuada</b> en la que basar su opinión.</p>
+      <p>Se interpreta junto con la NIA 200.</p>`
+    },
+    alcance_objetivo: {
+      ref: "Apartados 1–4",
+      title: "Alcance y objetivo",
+      body: `<p>Aplica a toda la evidencia obtenida durante la auditoría. Otras NIA tratan aspectos específicos (315, 570, 520) o evalúan si la evidencia es suficiente y adecuada (200, 330).</p>
+      <p>Objetivo: diseñar y aplicar procedimientos que permitan obtener evidencia suficiente y adecuada para basar la opinión del auditor.</p>
+      <p>Vigente desde el 15 de diciembre de 2009.</p>`
+    },
+    definiciones: {
+      ref: "Apartado 5",
+      title: "Definiciones clave",
+      body: `<ul>
+        <li><b>Registros contables</b>: asientos, documentación de soporte, libros y hojas de trabajo</li>
+        <li><b>Adecuación</b>: medida cualitativa — relevancia y fiabilidad</li>
+        <li><b>Evidencia de auditoría</b>: información usada para las conclusiones del auditor</li>
+        <li><b>Experto de la dirección</b>: especialista ajeno a contabilidad o auditoría</li>
+        <li><b>Suficiencia</b>: medida cuantitativa de la evidencia</li>
+      </ul>`
+    },
+    suficiencia: {
+      ref: "Apartado 6 · Guía A1–A25",
+      title: "Evidencia suficiente y adecuada",
+      body: `<p>El auditor diseña y aplica procedimientos adecuados a las circunstancias para obtener evidencia suficiente y adecuada.</p>
+      <p>Se obtiene mediante: inspección, observación, confirmación externa, recálculo, reejecución, procedimientos analíticos e indagación.</p>
+      <p>La suficiencia depende del riesgo valorado y de la calidad de la evidencia; más cantidad no compensa una baja calidad.</p>`
+    },
+    informacion_seleccion: {
+      ref: "Apartados 7–11 · Guía A26–A57",
+      title: "Información y selección de elementos",
+      body: `<ul>
+        <li><b>Relevancia y fiabilidad</b> (Ap.7): conexión lógica con la prueba y origen de la información</li>
+        <li><b>Experto de la dirección</b> (Ap.8): competencia, capacidad y objetividad</li>
+        <li><b>Información generada por la entidad</b> (Ap.9): exactitud, integridad, precisión y detalle</li>
+        <li><b>Selección de elementos</b> (Ap.10): examen 100%, específicos o muestreo</li>
+        <li><b>Incongruencias o reservas</b> (Ap.11): modificar o añadir procedimientos</li>
+      </ul>`
+    }
+  };
+ 
+  const stage = document.getElementById('stage');
+  const panel = document.getElementById('panel');
+  const panelRef = document.getElementById('panelRef');
+  const panelTitle = document.getElementById('panelTitle');
+  const panelBody = document.getElementById('panelBody');
+  const nodes = document.querySelectorAll('[data-key]');
+  const hint = document.getElementById('hint');
+ 
+  function openDetail(key){
+    const d = detail[key];
+    if(!d) return;
+    panelRef.textContent = d.ref;
+    panelTitle.textContent = d.title;
+    panelBody.innerHTML = d.body;
+    panel.classList.add('open');
+    stage.classList.add('panel-open');
+    hint.classList.add('faded');
+    nodes.forEach(n => n.classList.toggle('active', n.getAttribute('data-key') === key));
+  }
+ 
+  nodes.forEach(n => n.addEventListener('click', () => openDetail(n.getAttribute('data-key'))));
+ 
+  document.getElementById('panelClose').addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.remove('open');
+    stage.classList.remove('panel-open');
+    nodes.forEach(n => n.classList.remove('active'));
+  });
+</script>
+</body>
+</html>
+ 
